@@ -1,4 +1,4 @@
-# Poker Pot Assistant
+# Poker Pote
 
 ![Kotlin](https://img.shields.io/badge/Kotlin-1.9.x-blue?logo=kotlin) ![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-1.6.x-4285F4?logo=jetpackcompose) ![Material 3](https://img.shields.io/badge/Material%203-Design-lightgrey?logo=materialdesign)
 
