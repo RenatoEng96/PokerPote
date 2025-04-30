@@ -24,7 +24,7 @@ Um aplicativo Android simples, construído com Kotlin e Jetpack Compose, para au
 
 ## Como Usar
 
-1.  Faça o Download do app-PokerPote.apk e instale no seu dispositivo Android.
+1.  Faça o Download do [app-PokerPote.apk](https://github.com/RenatoEng96/PokerPote/blob/main/app-PokerPote.apk) e instale no seu dispositivo Android.
 
 ## Possíveis Melhorias Futuras
 
