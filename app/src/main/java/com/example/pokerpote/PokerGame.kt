@@ -1,7 +1,9 @@
+// Este é o caminho onde está esse arquivo: app/src/main/com/example/pokerpote/PokerGame.kt
 package com.example.pokerpote
-import kotlin.math.abs // Importa função para valor absoluto (não utilizada atualmente)
 import kotlin.math.max // Importa função para encontrar o valor máximo entre dois números
 import kotlin.math.roundToInt // Importa função para arredondar Double para Int
+import com.example.pokerpote.datastore.GameStateProto // Importe o Proto
+import com.example.pokerpote.datastore.PlayerProto
 
 
 /**
@@ -45,15 +47,49 @@ class PokerGame(
     // O valor atual do buy-in mínimo permitido (pode mudar se atualizações dinâmicas estiverem ativas)
     private var currentMinBuyIn: Double = initialMinBuyIn
     // O valor atual do Big Blind (BB) em FICHAS (pode mudar se atualizações dinâmicas estiverem ativas)
-    private var bb: Int // Valor inicial padrão, será recalculado no init
+    private var bb: Int = initialBB // Valor inicial padrão, será recalculado no init
 
-    // Bloco de inicialização, executado quando uma instância de PokerGame é criada
+    // --- Construtor Secundário para carregar do DataStore ---
+    constructor(savedState: GameStateProto) : this(
+        // Recria a classe usando os dados do proto
+        multiplier = savedState.multiplier,
+        initialMinBuyIn = savedState.initialMinBuyIn, // Usa o mínimo inicial salvo
+        initialBB = savedState.initialBb, // Usa o BB inicial salvo
+        initialStackDepth = savedState.initialStackDepth, // Usa o stack depth salvo
+        enableDynamicUpdates = savedState.dynamicUpdatesEnabled, // Usa a config dinâmica salva
+        bbUpdateRate = savedState.bbRate // Usa a taxa salva
+    ) {
+        println("DEBUG: [PokerGame] Recriando jogo a partir do estado salvo...")
+        // --- Sobrescreve o estado INTERNO com os valores ATUAIS salvos ---
+        this.currentMinBuyIn = savedState.currentMinBuyIn
+        this.bb = savedState.currentBb
+        this.sumBuyIns = savedState.sumBuyIns
+        this.cashOutTotal = savedState.cashOutTotal
+        this.entriesCount = savedState.entriesCount
+
+        // Limpa a lista de jogadores (caso o construtor primário adicione algo)
+        // e popula com os jogadores salvos.
+        this.players.clear()
+        this.players.addAll(savedState.playersList.map { protoPlayer ->
+            Player(name = protoPlayer.name, totalBuyIn = protoPlayer.totalBuyIn)
+        })
+        println("DEBUG: [PokerGame] Jogo recriado. ${players.size} jogadores carregados.")
+    }
+
+    // Bloco init original (será chamado por AMBOS os construtores ANTES do corpo do construtor secundário)
     init {
-        // --- Define o BB inicial diretamente ---
-        // Não calcula mais o BB com base na taxa aqui, apenas define o valor inicial passado.
-        this.bb = minimumBB // Ou this.bb = initialBB
-        // A lógica de cálculo dinâmico (updateBBInternalLogic) só será chamada depois,
-        // durante o jogo, se dynamicUpdatesEnabled for true.
+        // A inicialização do BB agora deve considerar se veio do construtor primário ou secundário.
+        // O construtor secundário sobrescreverá 'this.bb' logo após o init.
+        // Poderia refatorar para evitar a dupla definição, mas sobrescrever funciona.
+
+        println("DEBUG: [PokerGame] Bloco Init executado. BB inicializado com: ${this.bb}") // Log para verificar
+
+        // Garante que as propriedades adicionadas sejam inicializadas
+        // (Já feito pela passagem de parâmetros no 'this(...)')
+        // this.dynamicUpdatesEnabled = enableDynamicUpdates
+        // this.bbRate = bbUpdateRate
+        // this.minimumBB = initialBB
+        // this.stackDepth = initialStackDepth
     }
 
     /**
@@ -310,6 +346,17 @@ class PokerGame(
      * Garante que o resultado não seja negativo.
      */
     fun getTotalPot(): Double = max(0.0, (sumBuyIns - cashOutTotal)) * multiplier
+
+    // --- Getters Adicionais (ou tornar propriedades acessíveis) ---
+    // Necessários para o GameStateRepository.saveGameState
+    // Alternativa: Tornar as propriedades internas (internal) ou públicas
+
+    fun getInitialMinBuyIn(): Double = initialMinBuyIn // Exemplo, se initialMinBuyIn fosse privada
+    fun getInitialBB(): Int = minimumBB
+    fun getInitialStackDepth(): Double = stackDepth
+    fun areDynamicUpdatesEnabled(): Boolean = dynamicUpdatesEnabled
+    fun getBBRate(): Double = bbRate
+    fun getEntriesCount(): Int = entriesCount
 
     /**
      * Formata um valor Double como moeda (R$) arredondado para o inteiro mais próximo.

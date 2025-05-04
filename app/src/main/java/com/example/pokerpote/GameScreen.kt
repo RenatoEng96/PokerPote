@@ -1,3 +1,4 @@
+// Este é o caminho onde está esse arquivo: app/src/main/com/example/pokerpote/GameScreen.kt
 package com.example.pokerpote
 
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +36,9 @@ fun PokerGameScreen(
     pokerGame: PokerGame, // Recebe a instância ATIVA do jogo (criada em PokerAppNavigation).
     snackbarHostState: SnackbarHostState, // Recebe o estado do Snackbar (embora showSnackbar seja usado diretamente).
     showSnackbar: (String) -> Unit, // Recebe a FUNÇÃO para mostrar Snackbars.
-    onEndGame: () -> Unit // Recebe a FUNÇÃO (callback) para ser chamada quando o usuário quiser encerrar o jogo.
+    onEndGame: () -> Unit, // Recebe a FUNÇÃO (callback) para ser chamada quando o usuário quiser encerrar o jogo.
+    // --- NOVO PARÂMETRO ---
+    onGameUpdated: () -> Unit // Callback para notificar que o jogo foi atualizado e precisa ser salvo
 ) {
     // --- Estados da UI específicos desta tela ---
     // Estados para os campos de input de adicionar jogador/buy-in.
@@ -62,7 +65,10 @@ fun PokerGameScreen(
     // (jogador adicionado, buy-in, remoção), chamamos 'signalGameUpdate()'.
     // Isso incrementa 'gameVersion', forçando a reavaliação dos 'derivedStateOf' abaixo.
     var gameVersion by remember { mutableStateOf(0) }
-    fun signalGameUpdate() { gameVersion++ }
+    fun signalGameUpdate() {
+        gameVersion++
+        onGameUpdated() // <--- CHAMA O SALVAMENTO AQUI
+    }
 
     // --- Estados Derivados (Observam 'gameVersion') ---
     // 'derivedStateOf' otimiza a leitura do estado do 'pokerGame'.

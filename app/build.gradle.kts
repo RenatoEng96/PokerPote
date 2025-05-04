@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    // Adicione o plugin do Protobuf
+    id("com.google.protobuf") version "0.9.4" // Verifique a versão mais recente
 }
 
 android {
@@ -16,6 +18,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
     }
 
     buildTypes {
@@ -37,6 +42,38 @@ android {
     buildFeatures {
         compose = true
     }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.3" // Verifique a versão compatível
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+}
+
+// Configuração do Protobuf
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:3.25.1" // Verifique a versão mais recente
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.builtins {
+                create("java") {
+                    option("lite") // Importante para Android
+                }
+            }
+            // Adicione 'kotlin { option 'lite' }' se quiser gerar stubs Kotlin (opcional)
+            /*
+            task.builtins {
+                 create("kotlin") {
+                     option("lite")
+                 }
+            }
+            */
+        }
+    }
 }
 
 dependencies {
@@ -49,6 +86,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.datastore.core.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -56,4 +94,8 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.datastore:datastore:1.1.1") // Núcleo do DataStore
+    implementation("com.google.protobuf:protobuf-javalite:3.25.1") // Runtime leve do Protobuf
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.6") // Ou versão compatível
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // Verifique a versão estável mais recente
 }

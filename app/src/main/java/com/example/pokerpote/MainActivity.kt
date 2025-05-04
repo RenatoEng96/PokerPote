@@ -1,45 +1,27 @@
+// Este é o caminho onde está esse arquivo: app/src/main/com/example/pokerpote/MainActivity.kt
 package com.example.pokerpote
 
 // Imports do Android e Jetpack Compose
 import android.os.Bundle // Para estado da Activity
 import androidx.activity.ComponentActivity // Activity base para Compose
 import androidx.activity.compose.setContent // Função para definir o conteúdo da UI com Compose
-import androidx.compose.animation.AnimatedVisibility // Para mostrar/esconder elementos com animação
-import androidx.compose.animation.core.tween // Define a duração e curva da animação
-import androidx.compose.animation.fadeIn // Animação de fade in
-import androidx.compose.animation.fadeOut // Animação de fade out
 import androidx.compose.foundation.layout.* // Layouts como Column, Row, Spacer, padding, fillMaxSize
-import androidx.compose.foundation.lazy.LazyColumn // Lista rolável eficiente para muitos itens
-import androidx.compose.foundation.lazy.items // Helper para adicionar itens a LazyColumn
-import androidx.compose.foundation.rememberScrollState // Estado para lembrar a posição de rolagem de uma Column normal
-import androidx.compose.foundation.text.KeyboardActions // Ações do teclado (como botão 'Done')
-import androidx.compose.foundation.text.KeyboardOptions // Opções do teclado (tipo numérico, ação IME)
-import androidx.compose.foundation.verticalScroll // Modificador para tornar uma Column rolável
 import androidx.compose.material3.* // Componentes do Material Design 3 (Button, TextField, Card, Scaffold, etc.)
 import androidx.compose.runtime.* // Funções do Compose Runtime (remember, mutableStateOf, Composable, LaunchedEffect, derivedStateOf)
 import androidx.compose.ui.Alignment // Para alinhar elementos (CenterHorizontally, CenterVertically, etc.)
 import androidx.compose.ui.Modifier // Modificador para alterar aparência e comportamento dos Composables
-import androidx.compose.ui.platform.LocalFocusManager // Para controlar o foco (ex: esconder teclado)
-import androidx.compose.ui.text.font.FontWeight // Peso da fonte (Bold, Medium, Normal)
-import androidx.compose.ui.text.input.ImeAction // Ações do teclado (Next, Done, Send, etc.)
-import androidx.compose.ui.text.input.KeyboardType // Tipo de teclado (Number, Text, Email, etc.)
-import androidx.compose.ui.text.style.TextAlign // Alinhamento do texto (Center, Start, End)
-import androidx.compose.ui.unit.dp // Unidade de densidade de pixels para tamanhos e espaçamentos
-import androidx.compose.ui.unit.sp // Unidade de pixels escaláveis para tamanho de fonte
 import com.example.pokerpote.ui.theme.PokerPotTheme // Importa o tema customizado do app
 import kotlinx.coroutines.launch // Para iniciar coroutines (usado para Snackbar)
-import java.text.NumberFormat // Para formatar números como moeda
-import java.util.Locale // Para definir a localidade (Brasil) para formatação de moeda
-import kotlin.math.roundToInt // Para arredondar Double para Int (usado em formatChips)
 //import kotlin.reflect.KSuspendFunction1 // Não está sendo usado, pode ser removido
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.ui.text.font.FontStyle
-import java.math.BigDecimal
-import java.math.RoundingMode
-import kotlin.math.roundToLong // <-- Mudar de roundToInt para roundToLong
-import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.BasicAlertDialog // Usar BasicAlertDialog para mais controle ou manter AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api // Para BasicAlertDialog se usado
+import androidx.compose.runtime.LaunchedEffect // Import necessário
+import androidx.compose.runtime.rememberCoroutineScope // Import necessário
+import androidx.compose.ui.platform.LocalContext // Import necessário
+import com.example.pokerpote.data.GameStateRepository // Import Repository
+import com.example.pokerpote.data.gameStateDataStore // Import DataStore instance access
+import androidx.lifecycle.viewmodel.compose.viewModel // Para um ViewModel (opcional) ********
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
 
 
 // Define os dois estados de tela possíveis para a navegação simples
@@ -64,129 +46,185 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// --- Composable Principal de Navegação e Gerenciamento de Estado ---
-@Composable
-fun PokerAppNavigation() {
-    // --- Estados Principais ---
-    // Estado para controlar qual tela (Setup ou Game) está ativa. Começa em Setup.
-    // 'remember' garante que o estado sobreviva a recomposições.
-    // 'mutableStateOf' cria um estado observável; mudanças nele causam recomposição.
-    var currentScreen by remember { mutableStateOf(Screen.Setup) }
-    // Estado para guardar a instância ativa do jogo. Começa como null (sem jogo ativo).
-    var activePokerGame by remember { mutableStateOf<PokerGame?>(null) }
-    // Estado necessário para controlar a exibição de Snackbars (mensagens temporárias na parte inferior).
-    val snackbarHostState = remember { SnackbarHostState() }
-    // Escopo de Coroutine ligado ao ciclo de vida deste Composable. Usado para lançar operações assíncronas (mostrar Snackbar).
-    val scope = rememberCoroutineScope()
+// --- (OPCIONAL, MAS RECOMENDADO) ViewModel para Gerenciar Estado e Repositório ---
+// Isso desacopla a lógica de dados da UI
+class PokerAppViewModel(private val repository: GameStateRepository) : ViewModel() {
 
-    // --- Funções Auxiliares ---
-    // Função para mostrar Snackbars de forma centralizada e segura.
-    fun showSnackbar(message: String) {
-        // Lança a exibição do Snackbar em uma Coroutine separada (launch) para não bloquear a UI thread.
-        scope.launch {
-            // Opcional: Cancela qualquer Snackbar anterior para evitar filas. Descomente se necessário.
-            // snackbarHostState.currentSnackbarData?.dismiss()
-            // Mostra o Snackbar com a mensagem e duração definidas.
-            snackbarHostState.showSnackbar(
-                message = message,
-                duration = SnackbarDuration.Short // Duração curta (pode ser Long ou Indefinite)
-            )
+    // Estado observável para a instância do jogo
+    var activePokerGame by mutableStateOf<PokerGame?>(null)
+        private set // Só pode ser alterado dentro do ViewModel
+
+    // Estado observável para a tela atual
+    var currentScreen by mutableStateOf(Screen.Setup) // Começa em Setup por padrão
+        private set
+
+    // Flag para indicar se o carregamento inicial terminou
+    var isLoading by mutableStateOf(true)
+        private set
+
+    init {
+        loadInitialGame()
+    }
+
+    // Carrega o estado inicial do jogo do repositório
+    private fun loadInitialGame() {
+        viewModelScope.launch {
+            println("DEBUG: [ViewModel] Iniciando carregamento do estado inicial...")
+            val loadedState = repository.loadInitialGameState()
+            if (loadedState != null && loadedState.isGameActive) {
+                println("DEBUG: [ViewModel] Jogo ativo encontrado no DataStore. Recriando...")
+                activePokerGame = PokerGame(loadedState) // Recria usando o construtor secundário
+                currentScreen = Screen.Game // Define a tela do jogo
+                println("DEBUG: [ViewModel] Jogo recriado. Navegando para Screen.Game.")
+            } else {
+                println("DEBUG: [ViewModel] Nenhum jogo ativo encontrado ou estado inválido. Iniciando em Screen.Setup.")
+                activePokerGame = null
+                currentScreen = Screen.Setup // Garante que começa no Setup
+            }
+            isLoading = false // Marca o carregamento como concluído
+            println("DEBUG: [ViewModel] Carregamento inicial concluído. isLoading: $isLoading")
         }
     }
 
-    // --- Layout Estrutural ---
-    // Scaffold provê a estrutura básica do Material Design (TopAppBar, BottomAppBar, FloatingActionButton, Drawer, SnackbarHost).
-    Scaffold(
-        // Define onde os Snackbars gerenciados por 'snackbarHostState' serão exibidos.
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { innerPadding -> // 'innerPadding' contém os paddings aplicados pelo Scaffold (ex: se houver TopAppBar).
-        // É CRUCIAL aplicá-lo ao container principal do conteúdo.
+    // Inicia um NOVO jogo (chamado pelo SetupScreen)
+    fun startGame(multiplier: Double, initialBuyIn: Double, initialBB: Int, initialStackDepth: Double, dynamicUpdates: Boolean, bbRate: Double) {
+        println("DEBUG: [ViewModel] Iniciando NOVO jogo...")
+        val newGame = PokerGame(
+            multiplier = multiplier,
+            initialMinBuyIn = initialBuyIn,
+            initialBB = initialBB,
+            initialStackDepth = initialStackDepth,
+            enableDynamicUpdates = dynamicUpdates,
+            bbUpdateRate = bbRate
+        )
+        activePokerGame = newGame
+        currentScreen = Screen.Game
+        // Salva o estado inicial do novo jogo
+        viewModelScope.launch {
+            repository.saveGameState(newGame)
+            println("DEBUG: [ViewModel] Estado do NOVO jogo salvo.")
+        }
+    }
 
-        // Surface é um container básico que aplica cor de fundo e elevação do tema.
-        Surface(
-            modifier = Modifier
-                .fillMaxSize() // Ocupa todo o espaço disponível na tela.
-                .padding(innerPadding), // << IMPORTANTE: Aplica o padding do Scaffold aqui.
-            color = MaterialTheme.colorScheme.background // Usa a cor de fundo definida no tema.
-        ) {
-            // Controla qual Composable (tela) exibir com base no estado 'currentScreen'.
-            when (currentScreen) {
-                // Se a tela atual for Setup...
-                Screen.Setup -> {
-                    // Exibe o Composable da tela de configuração.
-                    SetupScreen(
-                        snackbarHostState = snackbarHostState, // Passa o estado para que SetupScreen possa mostrar Snackbars.
-                        // Define a ação a ser executada quando o jogo for iniciado no SetupScreen.
-                        // Esta é uma função lambda (callback) passada como parâmetro.
-                        onStartGame = {  multiplier, initialBuyIn, initialBB, initialStackDepth, dynamicUpdates, bbRate ->
-                            // Linha de Debug para verificar os parâmetros recebidos.
-                            println("DEBUG: Iniciando Jogo - MF: $multiplier, BuyIn: $initialBuyIn, BB Ini: $initialBB, StackDepth Ini: $initialStackDepth, Dinâmico: $dynamicUpdates, Taxa BB: $bbRate")
-                            // Cria uma NOVA instância do jogo com os parâmetros configurados na tela Setup.
-                            activePokerGame = PokerGame(
-                                multiplier = multiplier,
-                                initialMinBuyIn = initialBuyIn,
-                                initialBB = initialBB,
-                                initialStackDepth = initialStackDepth,
-                                enableDynamicUpdates = dynamicUpdates,
-                                // minBuyInUpdateRate REMOVIDO
-                                bbUpdateRate = bbRate
-                            )
-                            // Muda o estado 'currentScreen', o que causará a recomposição e a exibição da tela do jogo.
-                            currentScreen = Screen.Game
-                        }
-                    )
-                }
-                // Se a tela atual for Game...
-                Screen.Game -> {
-                    // Garante que só mostra a tela do jogo se 'activePokerGame' não for nulo (jogo foi iniciado).
-                    // 'let' executa o bloco se activePokerGame não for null, passando a instância como 'game'.
-                    activePokerGame?.let { game ->
-                        // Exibe o Composable da tela principal do jogo.
-                        PokerGameScreen(
-                            pokerGame = game, // Passa a instância ativa do jogo para a tela.
-                            snackbarHostState = snackbarHostState, // Passa o estado do Snackbar (pode ser útil).
-                            showSnackbar = ::showSnackbar, // Passa a REFERÊNCIA da função showSnackbar definida acima.
-                            // Define a ação (callback) para quando o usuário encerrar o jogo dentro de PokerGameScreen.
-                            onEndGame = {
-                                // Linha de Debug.
-                                println("DEBUG: Encerrando Jogo.")
-                                activePokerGame = null // Limpa a instância do jogo, liberando memória.
-                                currentScreen = Screen.Setup // Muda o estado para voltar à tela de configuração.
-                            }
-                        )
-                    } ?: run { // Bloco 'run' é executado se activePokerGame for null.
-                        // Este cenário não deveria ocorrer com a lógica atual, mas é um fallback seguro.
-                        // Usa LaunchedEffect para mudar o estado (navegar) de forma segura após a composição inicial.
-                        // Mudar estado diretamente aqui poderia causar problemas. 'Unit' significa que executa só na primeira vez.
-                        LaunchedEffect(Unit) {
-                            println("ERRO: activePokerGame nulo na tela Game, voltando para Setup.")
-                            currentScreen = Screen.Setup // Volta para Setup.
-                            showSnackbar("Erro inesperado: Jogo não encontrado. Voltando para configuração.") // Informa o usuário.
-                        }
-                    }
-                }
+    // Encerra o jogo ATUAL (chamado pelo GameScreen)
+    fun endGame() {
+        println("DEBUG: [ViewModel] Encerrando jogo...")
+        val gameToEnd = activePokerGame // Pega referência antes de limpar
+        activePokerGame = null
+        currentScreen = Screen.Setup
+        // Limpa o estado salvo no DataStore
+        if (gameToEnd != null) { // Só limpa se realmente havia um jogo
+            viewModelScope.launch {
+                repository.clearGameState()
+                println("DEBUG: [ViewModel] Estado do jogo limpo no DataStore.")
+            }
+        }
+    }
+
+    // Salva o estado ATUAL do jogo (chamado após ações em GameScreen)
+    fun saveCurrentGame() {
+        activePokerGame?.let { game ->
+            println("DEBUG: [ViewModel] Salvando estado atual do jogo...")
+            viewModelScope.launch {
+                repository.saveGameState(game)
+                println("DEBUG: [ViewModel] Estado ATUAL do jogo salvo.")
             }
         }
     }
 }
 
-// ==================================================
-//         Tela de Configuração (SetupScreen)
-// ==================================================
+// --- Factory para criar o ViewModel com o Repositório ---
+// Necessário porque o ViewModel tem dependência (repository) no construtor
+class PokerAppViewModelFactory(private val repository: GameStateRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(PokerAppViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return PokerAppViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
 
 
-// ==================================================
-//         Tela Principal do Jogo (PokerGameScreen)
-// ==================================================
+// --- Composable Principal de Navegação e Gerenciamento de Estado ---
+@Composable
+fun PokerAppNavigation() {
+    // --- Obter Contexto e Criar Repositório/ViewModel ---
+    val context = LocalContext.current
+    // Cria a instância do repositório usando o DataStore do contexto
+    val repository = remember { GameStateRepository(context.gameStateDataStore) }
+    // Cria o ViewModel usando a Factory
+    val viewModel: PokerAppViewModel = viewModel(
+        factory = PokerAppViewModelFactory(repository)
+    )
 
+    // --- Estados observados do ViewModel ---
+    val currentScreen = viewModel.currentScreen
+    val activePokerGame = viewModel.activePokerGame
+    val isLoading = viewModel.isLoading // Pega o estado de loading
 
+    // --- Snackbar (semelhante ao original) ---
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    fun showSnackbar(message: String) {
+        scope.launch {
+            snackbarHostState.showSnackbar(message = message, duration = SnackbarDuration.Short)
+        }
+    }
 
-// ==================================================
-//         Componentes Composable Auxiliares
-//         (Usados principalmente por PokerGameScreen)
-// ==================================================
+    // --- Exibir um indicador de carregamento enquanto o estado inicial é lido ---
+    if (isLoading) {
+        println("DEBUG: [Navigation] Exibindo tela de Loading...")
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator() // Mostra um spinner de progresso
+        }
+    } else {
+        println("DEBUG: [Navigation] Carregamento concluído. Exibindo tela: $currentScreen")
+        // --- Layout Estrutural (semelhante ao original) ---
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) }
+        ) { innerPadding ->
+            Surface(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                color = MaterialTheme.colorScheme.background
+            ) {
+                // Controla qual tela exibir com base no estado do ViewModel
+                when (currentScreen) {
+                    Screen.Setup -> {
+                        SetupScreen(
+                            snackbarHostState = snackbarHostState,
+                            // Chama a função do ViewModel para iniciar o jogo
+                            onStartGame = { multiplier, initialBuyIn, initialBB, initialStackDepth, dynamicUpdates, bbRate ->
+                                viewModel.startGame(multiplier, initialBuyIn, initialBB, initialStackDepth, dynamicUpdates, bbRate)
+                            }
+                        )
+                    }
+                    Screen.Game -> {
+                        // Garante que só mostra a tela do jogo se 'activePokerGame' não for nulo
+                        activePokerGame?.let { game ->
+                            PokerGameScreen(
+                                pokerGame = game,
+                                snackbarHostState = snackbarHostState,
+                                showSnackbar = ::showSnackbar,
+                                // Chama a função do ViewModel para encerrar o jogo
+                                onEndGame = { viewModel.endGame() },
+                                // --- NOVO: Passa callback para salvar o jogo ---
+                                onGameUpdated = { viewModel.saveCurrentGame() } // Chama o save do ViewModel
+                            )
+                        } ?: run {
+                            // Fallback se algo der errado (jogo nulo na tela Game)
+                            LaunchedEffect(Unit) {
+                                println("ERRO: activePokerGame nulo na tela Game (ViewModel), voltando para Setup.")
+                                viewModel.endGame() // Tenta limpar e voltar ao Setup de forma segura
+                                showSnackbar("Erro inesperado: Jogo não encontrado.")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } // Fim do else (isLoading)
+}
 
-
-
-// --- Seção de Estatísticas ---
-// Composable privado que exibe as principais estatísticas do jogo em um Card.
