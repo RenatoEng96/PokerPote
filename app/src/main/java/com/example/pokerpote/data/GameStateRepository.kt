@@ -1,4 +1,4 @@
-// Este é o caminho onde está esse arquivo: com/example/pokerpote/data/GameStateRepository.kt
+// Este é o caminho onde está esse arquivo: app/src/main/java/com/example/pokerpote/data/GameStateRepository.kt
 package com.example.pokerpote.data
 
 import android.content.Context
@@ -87,16 +87,16 @@ class GameStateRepository(private val dataStore: DataStore<GameStateProto>) {
             val builder = GameStateProto.newBuilder()
                 .setIsGameActive(true) // MARCA COMO ATIVO
                 .setMultiplier(pokerGame.multiplier)
-                .setInitialMinBuyIn(pokerGame.getCurrentMinBuyIn()) // Salva o minimo inicial configurado
-                .setInitialBb(pokerGame.getBB()) // Salva o BB minimo inicial configurado
-                .setInitialStackDepth(0.0) // TODO: Precisa expor initialStackDepth em PokerGame ou salvar separadamente
-                .setDynamicUpdatesEnabled(false) // TODO: Precisa expor dynamicUpdatesEnabled em PokerGame
-                .setBbRate(0.0) // TODO: Precisa expor bbRate em PokerGame
+                .setInitialMinBuyIn(pokerGame.getInitialMinBuyIn()) // Salva o minimo inicial configurado
+                .setInitialBb(pokerGame.getInitialBB()) // Salva o BB minimo inicial configurado
+                .setInitialStackDepth(pokerGame.getInitialStackDepth()) // TODO: Precisa expor initialStackDepth em PokerGame ou salvar separadamente
+                .setDynamicUpdatesEnabled(pokerGame.areDynamicUpdatesEnabled()) // TODO: Precisa expor dynamicUpdatesEnabled em PokerGame
+                .setBbRate(pokerGame.getBBRate()) // TODO: Precisa expor bbRate em PokerGame
                 .setCurrentMinBuyIn(pokerGame.getCurrentMinBuyIn())
                 .setCurrentBb(pokerGame.getBB())
                 .setSumBuyIns(pokerGame.getSumBuyIns())
                 .setCashOutTotal(pokerGame.getCashOutTotal())
-            // .setEntriesCount(0) // TODO: Precisa expor entriesCount em PokerGame
+                .setEntriesCount(pokerGame.getEntriesCount()) // TODO: Precisa expor entriesCount em PokerGame
 
             // Mapeia a lista de Players para PlayerProto e adiciona ao builder
             val playerProtos = pokerGame.getPlayers().map { player ->

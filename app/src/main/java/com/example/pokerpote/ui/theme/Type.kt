@@ -1,3 +1,4 @@
+// Este é o caminho onde está esse arquivo: app/src/main/java/com/example/pokerpote/ui/theme/Type.kt
 package com.example.pokerpote.ui.theme
 
 import androidx.compose.material3.Typography // Classe que define os estilos de texto do Material Theme

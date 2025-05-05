@@ -1,3 +1,4 @@
+// Este é o caminho onde está esse arquivo: app/src/main/java/com/example/pokerpote/ui/theme/Color.kt
 package com.example.pokerpote.ui.theme
 
 import androidx.compose.ui.graphics.Color

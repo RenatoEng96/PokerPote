@@ -1,4 +1,4 @@
-// Este é o caminho onde está esse arquivo: app/src/main/com/example/pokerpote/MainActivity.kt
+// Este é o caminho onde está esse arquivo: app/src/main/java/com/example/pokerpote/MainActivity.kt
 package com.example.pokerpote
 
 // Imports do Android e Jetpack Compose

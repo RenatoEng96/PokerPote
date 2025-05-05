@@ -1,3 +1,4 @@
+// Este é o caminho onde está esse arquivo: app/src/main/java/com/example/pokerpote/Utils.kt
 package com.example.pokerpote
 
 import java.text.NumberFormat

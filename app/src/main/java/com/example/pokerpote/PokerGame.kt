@@ -1,4 +1,4 @@
-// Este é o caminho onde está esse arquivo: app/src/main/com/example/pokerpote/PokerGame.kt
+// Este é o caminho onde está esse arquivo: app/src/main/java/com/example/pokerpote/PokerGame.kt
 package com.example.pokerpote
 import kotlin.math.max // Importa função para encontrar o valor máximo entre dois números
 import kotlin.math.roundToInt // Importa função para arredondar Double para Int

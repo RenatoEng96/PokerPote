@@ -1,3 +1,4 @@
+// Este é o caminho onde está esse arquivo: app/src/main/java/com/example/pokerpote/ui/theme/Theme.kt
 package com.example.pokerpote.ui.theme
 
 import android.os.Build // Para verificar a versão do Android (necessário para cores dinâmicas)
