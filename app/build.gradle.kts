@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     // Adicione o plugin do Protobuf
     id("com.google.protobuf") version "0.9.4" // Verifique a versão mais recente
+    id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
 
 android {
@@ -94,8 +95,20 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("androidx.datastore:datastore:1.1.1") // Núcleo do DataStore
-    implementation("com.google.protobuf:protobuf-javalite:3.25.1") // Runtime leve do Protobuf
-    implementation("androidx.compose.runtime:runtime-livedata:1.6.6") // Ou versão compatível
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // Verifique a versão estável mais recente
+    implementation(libs.androidx.datastore) // Núcleo do DataStore
+    implementation(libs.protobuf.javalite) // Runtime leve do Protobuf
+    implementation(libs.androidx.runtime.livedata) // Ou versão compatível
+    implementation(libs.androidx.lifecycle.viewmodel.compose) // Verifique a versão estável mais recente
+    // Navigation Compose
+    implementation(libs.androidx.navigation.compose)
+    // ViewModel Compose
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    // Kotlinx Serialization
+    implementation(libs.kotlinx.serialization.json)
+    // DataStore (para persistência com JSON)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.material.icons.extended.android)
+
+    implementation(libs.material3)
+
 }

@@ -61,7 +61,7 @@ private val LightColorScheme = lightColorScheme(
  * @param content O conteúdo da UI (sua árvore de Composables) que receberá este tema.
  */
 @Composable
-fun PokerPotTheme(
+fun PokerPoteTheme(
     darkTheme: Boolean = isSystemInDarkTheme(), // Detecta automaticamente o modo do sistema.
     dynamicColor: Boolean = true, // Habilita cores dinâmicas por padrão.
     content: @Composable () -> Unit // O lambda que contém a UI do seu app.
