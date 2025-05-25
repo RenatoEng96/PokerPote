@@ -44,7 +44,7 @@ object TournamentManager {
         val maxPlayersOnTable = tableCounts.values.maxOrNull() ?: 0
         val minPlayersOnTable = tableCounts.values.minOrNull() ?: 0
 
-        if (maxPlayersOnTable > minPlayersOnTable + 1) {
+        if (maxPlayersOnTable > minPlayersOnTable + 2) {
             val largestTableNumber = tableCounts.filterValues { it == maxPlayersOnTable }.keys.first()
             val smallestTableNumber = tableCounts.filterValues { it == minPlayersOnTable }.keys.first()
 
