@@ -9,7 +9,7 @@ O PokerPote é um aplicativo Android desenvolvido para auxiliar jogadores e orga
 
 ## Como Usar
 
-1.  Faça o Download do [app-PokerPote.apk](https://github.com/RenatoEng96/PokerPote/blob/main/app-PokerPote.apk) e instale no seu dispositivo Android.
+1.  Faça o Download do [app-PokerPote.apk](https://github.com/RenatoEng96/PokerPote/blob/Torneio/app-PokerPote.apk) e instale no seu dispositivo Android.
 
 ## Funcionalidades Principais
 
@@ -61,13 +61,6 @@ O PokerPote foi construído utilizando tecnologias modernas recomendadas para o 
   * **Proto DataStore**: Para salvar o estado do cash game de forma tipada e eficiente.
 * **Assincronia**: [**Kotlin Coroutines**](https://kotlinlang.org/docs/coroutines-overview.html) são usadas extensivamente para operações de fundo, como salvar dados e gerenciar o cronômetro do torneio, sem bloquear a thread principal.
 * **Gerenciamento de Som**: Utiliza o `MediaPlayer` do Android para tocar o som de notificação padrão do sistema.
-
-## Estrutura do Projeto
-
-O código-fonte está organizado em pacotes para separar as responsabilidades:
-
-com.example.pokerpote├── 📂 data/│   ├── GameStateRepository.kt    # Repositório para o estado do Cash Game (usando Proto DataStore)│   └── TournamentRepository.kt   # Repositório para o estado do Torneio (usando Preferences DataStore)├── 📂 tournament/│   ├── TournamentViewModel.kt    # ViewModel com a lógica do torneio│   ├── TournamentModels.kt       # Data classes (Tournament, Player, BlindLevel, etc.)│   ├── TournamentManager.kt      # Lógica de negócios (balanceamento de mesas, etc.)│   ├── TournamentSetupScreen.kt  # Tela de configuração de torneios│   ├── TournamentDashboardScreen.kt # Painel de controle do torneio ao vivo│   ├── TournamentComponents.kt   # Componentes de UI reutilizáveis para o modo torneio│   └── TournamentDashboardComponents.kt # Componentes de UI para o dashboard do torneio├── 📂 ui/theme/│   └── ... (Arquivos de tema do Jetpack Compose)├── AppNavigation.kt              # Define o NavHost e todas as rotas de navegação├── CashGameViewModel.kt          # ViewModel com a lógica do Cash Game├── GameScreen.kt                 # Tela principal do Cash Game├── GameScreenComponents.kt       # Componentes de UI reutilizáveis para o modo Cash Game├── HomeScreen.kt                 # Tela inicial do app├── MainActivity.kt               # Ponto de entrada da aplicação├── Player.kt                     # Data class para representar um jogador de Cash Game├── PokerGame.kt                  # Classe de modelo com as regras do Cash Game├── SetupScreen.kt                # Tela de configuração do Cash Game├── SoundManager.kt               # Gerenciador para reprodução de sons└── Utils.kt                      # Funções utilitárias (ex: formatação de moeda)
----
 
 ## Sugestões de Melhorias Futuras
 
