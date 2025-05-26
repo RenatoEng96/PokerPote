@@ -243,7 +243,7 @@ fun TableColumn(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(bottom = 8.dp).align(Alignment.CenterHorizontally)
             )
-            players.sortedByDescending { it.chipCount }.forEach { player ->
+            players.sortedBy { it.seat }.forEach { player ->
                 PlayerRow(
                     player = player,
                     tournament = tournament,
